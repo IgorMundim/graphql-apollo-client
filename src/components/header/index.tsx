@@ -1,42 +1,59 @@
+import { useMutation } from '@apollo/client';
 import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AnyAction } from 'redux';
 
 import Cart from '@/components/cart';
-import { selectProductsCount } from '@/redux/cart/cart.selector';
-import { login, logout } from '@/redux/user/slice';
+import { cartVar } from '@/graphql/apollo/reactiveVar/cart';
+import { GQL_LOGIN, GQL_LOGOUT } from '@/graphql/mutations/auth';
 
+import { loginFormVar } from '../../graphql/apollo/reactiveVar/user';
 import * as Styles from './styles';
 
 function Header() {
+  const [login] = useMutation(GQL_LOGIN);
+  const [logout] = useMutation(GQL_LOGOUT);
+
+  loginFormVar.use();
+  cartVar.use();
+
   const [cartIsVisible, setCartIsVisible] = useState(false);
-  const { currentUser } = useSelector((rootReducer: AnyAction) => rootReducer.userReducer);
-  const dispatch = useDispatch();
-  const productsCount = useSelector(selectProductsCount);
 
   const handleCartClick = () => {
     setCartIsVisible(true);
   };
 
-  const handleLoginClick = () => {
-    dispatch(login({ firstName: 'User', lastName: 'Account' }));
+  const handleLoginClick = async (e: any) => {
+    e.preventDefault();
+    const variables = {
+      userName: 'igor.mundim',
+      password: '@Password1',
+    };
+    const result = await login({ variables });
+    const anonymousCart = cartVar.get();
+    loginFormVar.set({ ...result.data.login });
+    cartVar.set(result.data.login.cart);
+    cartVar.margeAnonymousCart(anonymousCart);
   };
 
-  const handleLogoutClick = () => {
-    dispatch(logout());
+  const handleLogoutClick = async () => {
+    const variables = {
+      userName: 'igor.mundim',
+    };
+    await logout({ variables });
+    loginFormVar.reset();
+    cartVar.reset();
   };
 
   return (
     <Styles.Container>
-      <Styles.Logo>Redux Shopping</Styles.Logo>
+      <Styles.Logo>Client Apollo Shopping</Styles.Logo>
       <Styles.Buttons>
-        {currentUser ? (
-          <div onClick={handleLogoutClick}>{currentUser.firstName} - Logout</div>
+        {loginFormVar.get()?.firstName ? (
+          <div onClick={handleLogoutClick}>{loginFormVar.get()?.firstName} - Logout</div>
         ) : (
           <div onClick={handleLoginClick}>Login</div>
         )}
 
-        <div onClick={handleCartClick}>Card ({productsCount})</div>
+        <div onClick={handleCartClick}>Card ({cartVar.getQuantity()})</div>
       </Styles.Buttons>
 
       <Cart isVisible={cartIsVisible} setIsVisible={setCartIsVisible} />

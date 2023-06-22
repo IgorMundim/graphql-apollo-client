@@ -1,12 +1,12 @@
 import { BsCartPlus } from 'react-icons/bs';
-import { useDispatch } from 'react-redux';
 
-import { addProduct } from '@/redux/cart/slice';
+import { cartVar } from '@/graphql/apollo/reactiveVar/cart';
 
 import CustomButton from '../custom-button/index';
 import * as Styles from './styles';
 interface ProductItemProps {
   product: {
+    id: string;
     imageUrl: string;
     name: string;
     price: number;
@@ -14,9 +14,8 @@ interface ProductItemProps {
   };
 }
 const ProductItem = ({ product }: ProductItemProps) => {
-  const dispatch = useDispatch();
-  const handleProductClick = () => {
-    dispatch(addProduct(product));
+  const handleProductClick = async () => {
+    cartVar.addItem(product);
   };
   return (
     <Styles.ProductContainer>

@@ -26,6 +26,7 @@ module.exports = {
     },
   ],
   rules: {
+    "@typescript-eslint/no-explicit-any": ["off"],
     'prettier/prettier': 'warn',
     'unused-imports/no-unused-imports': 'warn',
     'simple-import-sort/imports': 'warn',

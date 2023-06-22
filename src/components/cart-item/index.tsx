@@ -1,7 +1,9 @@
+import { useMutation } from '@apollo/client';
 import { AiOutlineClose, AiOutlineMinus, AiOutlinePlus } from 'react-icons/ai';
-import { useDispatch } from 'react-redux';
 
-import { decreaseProductQuantity, increaseProductQuantity, removeProduct } from '@/redux/cart/slice';
+import { cartVar } from '@/graphql/apollo/reactiveVar/cart';
+import { loginFormVar } from '@/graphql/apollo/reactiveVar/user';
+import { GQL_CART_DELETE, GQL_CART_UPDATE } from '@/graphql/mutations/cart';
 
 import * as Styles from './styles';
 interface CartItemProps {
@@ -14,17 +16,27 @@ interface CartItemProps {
   };
 }
 const CartItem = ({ product }: CartItemProps) => {
-  const dispatch = useDispatch();
-  const handleRemoveClick = () => {
-    dispatch(removeProduct(product));
+  const [updateItemCart] = useMutation(GQL_CART_UPDATE);
+  const [deleteItemCart] = useMutation(GQL_CART_DELETE);
+  const handleRemoveClick = async () => {
+    if (loginFormVar.get().firstName) await deleteItemCart({ variables: { id: product.id } });
+    cartVar.removeItem(product.id);
   };
 
-  const handleIncreaseClick = () => {
-    dispatch(increaseProductQuantity(product));
+  const handleIncreaseClick = async () => {
+    if (loginFormVar.get().firstName) {
+      const variables = { data: { id: product.id, quantity: product.quantity + 1 } };
+      await updateItemCart({ variables });
+    }
+    cartVar.increaseItem(product);
   };
 
-  const handleDecreaseClick = () => {
-    dispatch(decreaseProductQuantity(product));
+  const handleDecreaseClick = async () => {
+    if (loginFormVar.get().firstName) {
+      const variables = { data: { id: product.id, quantity: product.quantity - 1 } };
+      await updateItemCart({ variables });
+    }
+    cartVar.decreaseItem(product);
   };
 
   return (
